@@ -14,7 +14,7 @@ Now let's look at the list_chunks_content:
 
 <img src="image3.png">
 
-Function prints all the chunks content with printf passing the chunk address as the first argument and here we have a format string vulnerability. We don't have an arbitary write here because format string isn't on the stack, but address v4 is. So we can overwrite v4 to get double free.
+Function prints all the chunks content with printf passing the chunk address as the first argument and here we have a format string vulnerability. We don't have an arbitary write here because format string isn't on the stack, but address of v4 is. So we can overwrite v4 to get double free.
 The glibc2.27 is used in this task, in this version tcache was added. When multiple threads are using heap the heap manager locks the heap while one thread is using it to avoid errors.So to make the allocations faster peaple made a tcache. A tcache or per thread cache is a bin that is own for each of threads unlike the other bins, so when u are using a tcache heap manager doesn't need to lock a heap and allocations go faster. But there is no security checks in tcache. Since glibc2.27 tcache is used by default, You can read more about tcache here https://ctf-wiki.github.io/ctf-wiki/pwn/linux/glibc-heap/implementation/tcache/.
 
 Our strategy is pretty simple:
