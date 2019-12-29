@@ -5,4 +5,5 @@ First let's look at the binary in IDA:
 
 Here is the code that simply reads a character and executes a command appropriate to it. But what v4 variable used for ?
 Lets look deep into the function allocate_chunk:
+
 <img src="image2.png">
